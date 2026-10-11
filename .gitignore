@@ -1,0 +1,5 @@
+node_modules/
+dist/
+recruiterbot.db
+recruiterbot.db-journal
+.DS_Store
