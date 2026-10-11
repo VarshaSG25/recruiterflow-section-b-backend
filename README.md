@@ -25,23 +25,62 @@ Initializes the SQLite database and seeds all 15 fictional candidate profiles an
 npm run seed
 ```
 
-### 2. Start the API Server
-Starts the Express server on `http://localhost:4000`:
+### 2. Display Tables in Terminal (Matching PDF Format)
+Prints out the Candidates table, Jobs table, and Match Results in formatted terminal tables matching the PDF columns:
+```bash
+npm run show-tables
+```
+
+### 3. Start the Interactive Table Dashboard & API Server
+Starts the server at `http://localhost:4000` with an interactive Web Table Dashboard (view tables, run matches, insert data via forms):
 ```bash
 npm start
 # or development mode with live watch:
 npm run dev
 ```
 
-### 3. Run the SQL Detective Challenge
+### 4. Run the SQL Detective Challenge
 Executes the analytical queries in `sql_detective.sql` against the hiring ops dataset and prints tabular verification:
 ```bash
 npm run sql-detective
 ```
 
-### 4. Run Automated Backend Tests
+### 5. Run Automated Backend Tests
 ```bash
 npm test
+```
+
+---
+
+## 📥 Data Insertion (Matching Table Columns)
+
+You can insert new candidates and jobs either through the Web Dashboard at `http://localhost:4000` or via raw SQL REST endpoints matching the table columns:
+
+### Insert Candidate (`POST /candidates`)
+```bash
+curl -X POST http://localhost:4000/candidates \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Watson",
+    "skills": "forensics, medicine, strategy",
+    "experience_years": 5,
+    "availability": "Immediate",
+    "traits": "loyal, observant",
+    "quirk": "Chronicler of unusual bugs"
+  }'
+```
+
+### Insert Job (`POST /jobs`)
+```bash
+curl -X POST http://localhost:4000/jobs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Cybersecurity Forensic Lead",
+    "required_skills": "forensics, strategy",
+    "min_experience": 4,
+    "culture_keywords": "vigilant, detail-oriented",
+    "tagline": "Protect production from the impossible."
+  }'
 ```
 
 ---
