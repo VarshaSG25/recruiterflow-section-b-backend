@@ -16,7 +16,6 @@ It consists of:
 
 ### Installation
 ```bash
-cd backend
 npm install
 ```
 
