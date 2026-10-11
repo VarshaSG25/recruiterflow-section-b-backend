@@ -1,6 +1,17 @@
 import { queryRawAll, queryRawGet } from './db/database.js';
-import { Candidate, Job, calculateMatch, compareMatches } from './matching/engine.js';
+import { Candidate, Job, calculateMatch, compareMatches, MatchResult } from './matching/engine.js';
 import { seedDatabase } from './db/seed.js';
+import { renderTable, Column } from './utils/table-formatter.js';
+
+// ANSI color helpers
+const BOLD = '\x1b[1m';
+const RESET = '\x1b[0m';
+const GREEN = '\x1b[32m';
+const YELLOW = '\x1b[33m';
+const CYAN = '\x1b[36m';
+const MAGENTA = '\x1b[35m';
+const WHITE = '\x1b[97m';
+const GRAY = '\x1b[90m';
 
 // Ensure database is populated
 try {
@@ -12,91 +23,136 @@ try {
   seedDatabase();
 }
 
-console.log('\n====================================================================================================================');
-console.log('RECRUITERFLOW SECTION B: SEED DATA — CANDIDATES TABLE (AS SHOWN IN PDF)');
-console.log('====================================================================================================================\n');
+console.log('\n' + BOLD + MAGENTA + '=============================================================================================================================' + RESET);
+console.log(BOLD + WHITE + '   RECRUITERFLOW SECTION B: SEED DATA — CANDIDATES TABLE (EXACT SCHEMA AS GIVEN IN PDF)' + RESET);
+console.log(BOLD + MAGENTA + '=============================================================================================================================' + RESET + '\n');
 
-// 1. Fetch Candidates and format exactly as PDF table
+// 1. Render Candidates Table
 const rawCandidates = queryRawAll<Candidate>('SELECT * FROM candidates ORDER BY id ASC');
-const formattedCandidates = rawCandidates.map(c => ({
-  'ID': c.id,
-  'Name': c.name,
-  'Skills': c.skills,
-  'Experience (yrs)': c.experience_years,
-  'Availability': c.availability,
-  'Traits': c.traits,
-  'Quirk': c.quirk,
-}));
 
-console.table(formattedCandidates);
+const candidateColumns: Column<Candidate>[] = [
+  { header: 'ID', width: 4, align: 'center', value: c => `${c.id}` },
+  { header: 'Name', width: 14, align: 'left', value: c => BOLD + WHITE + c.name + RESET },
+  { header: 'Skills', width: 26, align: 'left', value: c => c.skills },
+  { header: 'Exp(yrs)', width: 8, align: 'center', value: c => `${c.experience_years}` },
+  {
+    header: 'Availability',
+    width: 12,
+    align: 'center',
+    value: c => {
+      if (c.availability === 'Immediate') return GREEN + c.availability + RESET;
+      if (c.availability === '2 weeks') return YELLOW + c.availability + RESET;
+      return GRAY + c.availability + RESET;
+    },
+  },
+  { header: 'Traits', width: 18, align: 'left', value: c => c.traits },
+  { header: 'Quirk', width: 36, align: 'left', value: c => `"${c.quirk}"` },
+];
 
-console.log('\n====================================================================================================================');
-console.log('RECRUITERFLOW SECTION B: SEED DATA — JOBS TABLE (AS SHOWN IN PDF)');
-console.log('====================================================================================================================\n');
+console.log(renderTable(rawCandidates, candidateColumns));
 
-// 2. Fetch Jobs and format exactly as PDF table
+console.log('\n' + BOLD + MAGENTA + '=============================================================================================================================' + RESET);
+console.log(BOLD + WHITE + '   RECRUITERFLOW SECTION B: SEED DATA — JOBS TABLE (EXACT SCHEMA AS GIVEN IN PDF)' + RESET);
+console.log(BOLD + MAGENTA + '=============================================================================================================================' + RESET + '\n');
+
+// 2. Render Jobs Table
 const rawJobs = queryRawAll<Job>('SELECT * FROM jobs ORDER BY id ASC');
-const formattedJobs = rawJobs.map(j => ({
-  'ID': j.id,
-  'Title': j.title,
-  'Required Skills': j.required_skills,
-  'Min Experience': j.min_experience,
-  'Culture Keywords': j.culture_keywords,
-  'Tagline': j.tagline,
-}));
 
-console.table(formattedJobs);
+const jobColumns: Column<Job>[] = [
+  { header: 'ID', width: 4, align: 'center', value: j => `${j.id}` },
+  { header: 'Title', width: 22, align: 'left', value: j => BOLD + WHITE + j.title + RESET },
+  { header: 'Required Skills', width: 26, align: 'left', value: j => j.required_skills },
+  { header: 'Min Exp', width: 8, align: 'center', value: j => `${j.min_experience} yrs` },
+  { header: 'Culture Keywords', width: 20, align: 'left', value: j => j.culture_keywords },
+  { header: 'Tagline', width: 36, align: 'left', value: j => `"${j.tagline}"` },
+];
 
-console.log('\n====================================================================================================================');
-console.log('RECRUITERFLOW SECTION B: MATCH RESULTS — RANKED CANDIDATES FOR "Backend Detective" (JOB #1)');
-console.log('====================================================================================================================\n');
+console.log(renderTable(rawJobs, jobColumns));
 
-// 3. Match Candidates for Job #1 (Backend Detective)
+console.log('\n' + BOLD + MAGENTA + '=============================================================================================================================' + RESET);
+console.log(BOLD + WHITE + '   RECRUITERFLOW SECTION B: MATCH RESULTS — RANKED CANDIDATES FOR "Backend Detective" (JOB #1)' + RESET);
+console.log(BOLD + MAGENTA + '=============================================================================================================================' + RESET + '\n');
+
+// 3. Render Match Results for Job #1
 const job1 = queryRawGet<Job>('SELECT * FROM jobs WHERE id = 1');
 if (job1) {
   const matches = rawCandidates
     .map(c => calculateMatch(c, job1))
     .sort(compareMatches);
 
-  const formattedMatches = matches.map((m, idx) => ({
-    'Rank': `#${idx + 1}`,
-    'Candidate Name': m.candidateName,
-    'Score': `${m.score}/100`,
-    'Matched Skills': m.matchingSkills.join(', ') || 'none',
-    'Skills Pts': `${m.scoreBreakdown.skillsScore}/50`,
-    'Exp Pts': `${m.scoreBreakdown.experienceScore}/25`,
-    'Culture Pts': `${m.scoreBreakdown.cultureScore}/15`,
-    'Avail Pts': `${m.scoreBreakdown.availabilityScore}/10`,
-    'Reason': m.reason,
-  }));
+  const matchColumns: Column<MatchResult>[] = [
+    {
+      header: 'Rank',
+      width: 6,
+      align: 'center',
+      value: (_m, idx) => (idx === 0 ? BOLD + YELLOW + '#1' + RESET : `#${idx + 1}`),
+    },
+    { header: 'Candidate Name', width: 16, align: 'left', value: m => BOLD + WHITE + m.candidateName + RESET },
+    {
+      header: 'Score',
+      width: 9,
+      align: 'center',
+      value: m => (m.score >= 80 ? BOLD + GREEN + `${m.score}/100` + RESET : `${m.score}/100`),
+    },
+    {
+      header: 'Matched Skills',
+      width: 22,
+      align: 'left',
+      value: m => (m.matchingSkills.length > 0 ? GREEN + m.matchingSkills.join(', ') + RESET : GRAY + 'None' + RESET),
+    },
+    {
+      header: 'Score Breakdown',
+      width: 22,
+      align: 'left',
+      value: m => `S:${m.scoreBreakdown.skillsScore}/50 E:${m.scoreBreakdown.experienceScore}/25 C:${m.scoreBreakdown.cultureScore}/15 A:${m.scoreBreakdown.availabilityScore}/10`,
+    },
+    { header: 'Reason & Explanation', width: 42, align: 'left', value: m => m.reason },
+  ];
 
-  console.table(formattedMatches.slice(0, 5));
+  console.log(renderTable(matches.slice(0, 5), matchColumns));
 }
 
-console.log('\n====================================================================================================================');
-console.log('RECRUITERFLOW SECTION B: MATCH RESULTS — RANKED JOBS FOR "Michael S." (CANDIDATE #11)');
-console.log('====================================================================================================================\n');
+console.log('\n' + BOLD + MAGENTA + '=============================================================================================================================' + RESET);
+console.log(BOLD + WHITE + '   RECRUITERFLOW SECTION B: REVERSE MATCH RESULTS — RANKED JOBS FOR "Michael S." (CANDIDATE #11)' + RESET);
+console.log(BOLD + MAGENTA + '=============================================================================================================================' + RESET + '\n');
 
-// 4. Match Jobs for Candidate (Michael S.)
+// 4. Render Reverse Match Results for Candidate (Michael S.)
 const candidateMichael = queryRawGet<Candidate>("SELECT * FROM candidates WHERE name LIKE 'Michael%' LIMIT 1");
 if (candidateMichael) {
   const jobMatches = rawJobs
     .map(j => calculateMatch(candidateMichael, j))
     .sort(compareMatches);
 
-  const formattedJobMatches = jobMatches.map((m, idx) => ({
-    'Rank': `#${idx + 1}`,
-    'Job Title': m.jobTitle,
-    'Score': `${m.score}/100`,
-    'Matched Skills': m.matchingSkills.join(', ') || 'none',
-    'Skills Pts': `${m.scoreBreakdown.skillsScore}/50`,
-    'Exp Pts': `${m.scoreBreakdown.experienceScore}/25`,
-    'Culture Pts': `${m.scoreBreakdown.cultureScore}/15`,
-    'Avail Pts': `${m.scoreBreakdown.availabilityScore}/10`,
-    'Reason': m.reason,
-  }));
+  const reverseColumns: Column<MatchResult>[] = [
+    {
+      header: 'Rank',
+      width: 6,
+      align: 'center',
+      value: (_m, idx) => (idx === 0 ? BOLD + YELLOW + '#1' + RESET : `#${idx + 1}`),
+    },
+    { header: 'Job Title', width: 24, align: 'left', value: m => BOLD + WHITE + m.jobTitle + RESET },
+    {
+      header: 'Score',
+      width: 9,
+      align: 'center',
+      value: m => (m.score >= 60 ? BOLD + GREEN + `${m.score}/100` + RESET : `${m.score}/100`),
+    },
+    {
+      header: 'Matched Skills',
+      width: 20,
+      align: 'left',
+      value: m => (m.matchingSkills.length > 0 ? GREEN + m.matchingSkills.join(', ') + RESET : GRAY + 'None' + RESET),
+    },
+    {
+      header: 'Score Breakdown',
+      width: 22,
+      align: 'left',
+      value: m => `S:${m.scoreBreakdown.skillsScore}/50 E:${m.scoreBreakdown.experienceScore}/25 C:${m.scoreBreakdown.cultureScore}/15 A:${m.scoreBreakdown.availabilityScore}/10`,
+    },
+    { header: 'Reason & Explanation', width: 40, align: 'left', value: m => m.reason },
+  ];
 
-  console.table(formattedJobMatches);
+  console.log(renderTable(jobMatches, reverseColumns));
 }
 
 console.log('\n');
