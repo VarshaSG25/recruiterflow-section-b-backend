@@ -8,6 +8,7 @@
     "start": "tsx src/server.ts",
     "dev": "tsx watch src/server.ts",
     "seed": "tsx src/db/seed.ts",
+    "show-tables": "tsx src/display-tables.ts",
     "sql-detective": "tsx src/sql-detective/run.ts",
     "build": "tsc",
     "test": "tsx test/matching.test.ts"
