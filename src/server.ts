@@ -47,10 +47,9 @@ app.get('/', (_req: Request, res: Response) => {
     </head>
     <body>
       <div class="card">
-        <h1>🤖 RecruiterBot Backend API</h1>
-        <p>This is the <strong>Backend API Service</strong> running on <strong>Port 4000</strong>.</p>
-        <p>Looking for the <strong>visual website &amp; UI</strong>? Open the Frontend app running on Port 3000:</p>
-        <a href="http://localhost:3000" class="btn">👉 Open Frontend UI (http://localhost:3000)</a>
+        <h1>🤖 RecruiterBot Backend API (Section B)</h1>
+        <p>This is the standalone <strong>Node.js &amp; SQLite Backend Service</strong> for Section B of the Recruiterflow Take-Home Assignment.</p>
+        <p>Built with strictly <strong>Raw SQL &amp; Native SQLite (zero ORMs/query builders)</strong>, featuring an explainable multi-factor candidate matching engine and the SQL Detective analytical queries.</p>
         
         <div class="endpoints">
           <div style="font-weight: bold; color: #94a3b8; margin-bottom: 12px; font-size: 12px; text-transform: uppercase;">Available API Endpoints:</div>
